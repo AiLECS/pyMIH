@@ -15,7 +15,9 @@ class MIHIndex:
         if hashsize % 8 != 0:
             raise ValueError('hashsize ' + str(hashsize) + ' is not a multiple of 8')
         self._hashlength = hashsize
-        self._items = []
+        self._items = None
+        self._index = None
+        self._categories = []
         self._trained = False
         self._pattern = re.compile('^[a-f0-9]{' + str(int(hashsize/4)) + '}$', re.IGNORECASE)
         self._floor = None
@@ -61,21 +63,39 @@ class MIHIndex:
             _entries.update(self._getwindow(word, distance, _position+1, _entries))
         return _entries
 
-    def update(self, new):
+    def update(self, new, category):
         """
-        Add more entries for indexing. Only accepts iterables of hex strings
+        Add more entries for indexing, together with category/class. Only accepts iterables of hex strings
 
         Keyword arguments:
         new -- iterable of hex strings to add
+        category -- category/class name for the added strings (e.g. 'ignorable')
         """
+        offset = -1
+        for i in range(0, len(self._categories), 1):
+            if self._categories[i] == category:
+                offset = i
+                break
+        if offset == -1:
+            self._categories.append(category)
+            offset = len(self._categories) - 1
+
         if isinstance(new, str):
-            new = []
+            new = [new]
+
+        if self._items is None:
+            self._items = {}
+
         for x in new:
             if self._pattern.fullmatch(x):
-                self._items.append(x)
-                self._trained = False
+                if x not in self._items.keys():
+                    self._items[x] = [offset]
+                else:
+                    if offset not in self._items[x]:
+                        self._items[x].append(offset)
             else:
                 raise ValueError('Not a valid hex string: ' + str(x))
+            self._trained = False
 
     # train the index.
     def train(self, wordLength=16, threshold=32):
@@ -85,25 +105,26 @@ class MIHIndex:
         :param threshold:  Threshold for matching - i.e. hamming distance needs to be <= to guarantee entry to be returned. Defaults to 32
         :return: None
         """
-        items = set(self._items)
-        self._items = []
-        length = -1
-        for i in items:
-            # convert to bit array
-            b = bitarray()
-            b.frombytes(bytes.fromhex(i))
-            if len(b) != self._hashlength:
-                raise ValueError('Invalid hash length encountered: ' + i)
-            self._items.append(b)
+        if self._trained:
+            raise ValueError('Index already trained. Rebuild object to train again')
 
+        self._index = []
+        for k, v in self._items.items():
+            b = bitarray()
+            b.frombytes(bytes.fromhex(k))
+            if len(b) != self._hashlength:
+                raise ValueError('Invalid hash length encountered: ' + k)
+            else:
+                self._index.append((b, v))
+        self._items = None
 
         self._floor = floor(threshold/wordLength)
 
         self._words = []
         for i in range(0, self._hashlength, wordLength):
             w = {}
-            for c in range(0, len(self._items)):
-                hex = self._items[c][i:i+wordLength].tobytes().hex()
+            for c in range(0, len(self._index)):
+                hex = self._index[c][0][i:i+wordLength].tobytes().hex()
                 if hex not in w.keys():
                     w[hex] = {c}
                 else:
@@ -154,9 +175,12 @@ class MIHIndex:
                 if w in self._words[c]:
                     for x in self._words[c][w]:
                         if x not in candidates:
-                            r = self._gethamming(b, self._items[x], self._threshold)
+                            r = self._gethamming(b, self._index[x][0], self._threshold)
                             if r is not None:
-                                yield self._items[x].tobytes().hex(), r
+                                cats = []
+                                for d in self._index[x][1]:
+                                    cats.append(self._categories[d])
+                                yield self._index[x][0].tobytes().hex(), cats, r
                             candidates.add(x)
             c += 1
 

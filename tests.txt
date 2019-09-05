@@ -21,19 +21,31 @@ Declare with valid hash length
     >>> x = MIHIndex(256)
 
 Add valid data
+    >>> x.update(['358c86641a5269ab5b0db5f1b2315c1642cef9652c39b6ced9f646d91f071927','358c86641a5269ab5b0db5f1b2315c1642cef9652c39b6ced9f646d91f071928','358c86641a5269ab5b0db5f1b2315c1642cef9652c39b6ced9f646d91f071936'], 'ignorable')
+
+Add valid data without category
     >>> x.update(['358c86641a5269ab5b0db5f1b2315c1642cef9652c39b6ced9f646d91f071927','358c86641a5269ab5b0db5f1b2315c1642cef9652c39b6ced9f646d91f071928','358c86641a5269ab5b0db5f1b2315c1642cef9652c39b6ced9f646d91f071936'])
+    Traceback (most recent call last):
+        ...
+    TypeError: update() missing 1 required positional argument: 'category'
+
+Add valid data with int category (allowed, but not recommended)
+    >>> x.update(['358c86641a5269ab5b0db5f1b2315c1642cef9652c39b6ced9f646d91f071927','358c86641a5269ab5b0db5f1b2315c1642cef9652c39b6ced9f646d91f071928','358c86641a5269ab5b0db5f1b2315c1642cef9652c39b6ced9f646d91f071936'], 1)
+
+Add valid data with None category (allowed, but not recommended)
+    >>> x.update(['358c86641a5269ab5b0db5f1b2315c1642cef9652c39b6ced9f646d91f071927','358c86641a5269ab5b0db5f1b2315c1642cef9652c39b6ced9f646d91f071928','358c86641a5269ab5b0db5f1b2315c1642cef9652c39b6ced9f646d91f071936'], None)
 
 Add invalid data - faulty hex string
-    >>> x.update(['358c86641a5269ab5b0db5f1b2315c1642cef9652c39b6ced9f646d91f071927','358c86641a5269ab5b0db5f1b2315c1642cef9652c39b6ced9f646d91f07192g'])
+    >>> x.update(['358c86641a5269ab5b0db5f1b2315c1642cef9652c39b6ced9f646d91f071927','358c86641a5269ab5b0db5f1b2315c1642cef9652c39b6ced9f646d91f07192g'], 'ignorable')
     Traceback (most recent call last):
         ...
     ValueError: Not a valid hex string: 358c86641a5269ab5b0db5f1b2315c1642cef9652c39b6ced9f646d91f07192g
 
 Add invalid data - string (not iterable list/set). Function converts to list
-    >>> x.update('358c86641a5269ab5b0db5f1b2315c1642cef9652c39b6ced9f646d91f071927')
+    >>> x.update('358c86641a5269ab5b0db5f1b2315c1642cef9652c39b6ced9f646d91f071927', 'ignorable')
 
 Add invalid data - int.
-    >>> x.update(358)
+    >>> x.update(358, 'ignorable')
     Traceback (most recent call last):
         ...
     TypeError: 'int' object is not iterable
@@ -50,7 +62,7 @@ Test window generation.
 
 Attempt query without training
 >>> x = MIHIndex()
-    >>> x.update(['358c86641a5269ab5b0db5f1b2315c1642cef9652c39b6ced9f646d91f071927','358c86641a5269ab5b0db5f1b2315c1642cef9652c39b6ced9f646d91f071928','358c86641a5269ab5b0db5f1b2315c1642cef9652c39b6ced9f646d91f071936'])
+    >>> x.update(['358c86641a5269ab5b0db5f1b2315c1642cef9652c39b6ced9f646d91f071927','358c86641a5269ab5b0db5f1b2315c1642cef9652c39b6ced9f646d91f071928','358c86641a5269ab5b0db5f1b2315c1642cef9652c39b6ced9f646d91f071936'], 'ignorable')
     >>> ('358c86641a5269ab5b0db5f1b2315c1642cef9652c39b6ced9f646d91f071927', 0) in x.query('358c86641a5269ab5b0db5f1b2315c1642cef9652c39b6ced9f646d91f071927')
     Traceback (most recent call last):
         ...
@@ -58,19 +70,20 @@ Attempt query without training
 
 Test index accuracy
     >>> x = MIHIndex()
-    >>> x.update(['358c86641a5269ab5b0db5f1b2315c1642cef9652c39b6ced9f646d91f071927','358c86641a5269ab5b0db5f1b2315c1642cef9652c39b6ced9f646d91f071928','358c86641a5269ab5b0db5f1b2315c1642cef9652c39b6ced9f646d91f071936'])
+    >>> x.update(['358c86641a5269ab5b0db5f1b2315c1642cef9652c39b6ced9f646d91f071927','358c86641a5269ab5b0db5f1b2315c1642cef9652c39b6ced9f646d91f071928','358c86641a5269ab5b0db5f1b2315c1642cef9652c39b6ced9f646d91f071936'], 'ignorable')
     >>> x.train(16,32)
-    >>> ('358c86641a5269ab5b0db5f1b2315c1642cef9652c39b6ced9f646d91f071927', 0) in x.query('358c86641a5269ab5b0db5f1b2315c1642cef9652c39b6ced9f646d91f071927')
+    >>> ('358c86641a5269ab5b0db5f1b2315c1642cef9652c39b6ced9f646d91f071927', ['ignorable'], 0) in x.query('358c86641a5269ab5b0db5f1b2315c1642cef9652c39b6ced9f646d91f071927')
     True
-    >>> ('358c86641a5269ab5b0db5f1b2315c1642cef9652c39b6ced9f646d91f071928', 4) in x.query('358c86641a5269ab5b0db5f1b2315c1642cef9652c39b6ced9f646d91f071927')
+    >>> ('358c86641a5269ab5b0db5f1b2315c1642cef9652c39b6ced9f646d91f071928', ['ignorable'], 4) in x.query('358c86641a5269ab5b0db5f1b2315c1642cef9652c39b6ced9f646d91f071927')
     True
 
 Decrease HD
    >>> x = MIHIndex()
-   >>> x.update(['358c86641a5269ab5b0db5f1b2315c1642cef9652c39b6ced9f646d91f071927','358c86641a5269ab5b0db5f1b2315c1642cef9652c39b6ced9f646d91f071928','358c86641a5269ab5b0db5f1b2315c1642cef9652c39b6ced9f646d91f071936'])
+   >>> x.update(['358c86641a5269ab5b0db5f1b2315c1642cef9652c39b6ced9f646d91f071927','358c86641a5269ab5b0db5f1b2315c1642cef9652c39b6ced9f646d91f071928','358c86641a5269ab5b0db5f1b2315c1642cef9652c39b6ced9f646d91f071936'], 'ignorable')
    >>> x.train(16,0)
-   >>> ('358c86641a5269ab5b0db5f1b2315c1642cef9652c39b6ced9f646d91f071927', 0) in x.query('358c86641a5269ab5b0db5f1b2315c1642cef9652c39b6ced9f646d91f071927')
-   True
-   >>> ('358c86641a5269ab5b0db5f1b2315c1642cef9652c39b6ced9f646d91f071928', 4) in x.query('358c86641a5269ab5b0db5f1b2315c1642cef9652c39b6ced9f646d91f071927')
+   >>> ('358c86641a5269ab5b0db5f1b2315c1642cef9652c39b6ced9f646d91f071928', ['ignorable'], 4) in x.query('358c86641a5269ab5b0db5f1b2315c1642cef9652c39b6ced9f646d91f071927')
    False
+   >>> ('358c86641a5269ab5b0db5f1b2315c1642cef9652c39b6ced9f646d91f071927', ['ignorable'], 0) in x.query('358c86641a5269ab5b0db5f1b2315c1642cef9652c39b6ced9f646d91f071927')
+   True
+
 

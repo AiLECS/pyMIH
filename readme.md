@@ -11,6 +11,7 @@ The threatexchange document (linked above) provides a good, 'plain English' desc
 ***
 
 ### Usage
+Default values for MIHIndex constructor and train() method are set for PDQ hash, using 32 bit match threshold (30 being non divisible by 8).
 ```python
 from pyMIH import MIHIndex
 # Defaults to a 256 bit hash size
@@ -26,8 +27,8 @@ with open('ignorable.PDQ') as fi:
     for line in fi:
         PDQs.add(line.replace('\n', ''))
 
-# Add to index
-x.update(PDQs)
+# Add to index - hashes plus category name (non-string types should work, but aren't recommended)
+x.update(PDQs, 'ignorable')
 
 # Train index. Word length is internal slot/word size for individual indices (see afore mentioned documentation for more info)
 # Threshold is maximum hamming distance (inclusive). Defaults to values shown here.
@@ -37,8 +38,8 @@ x.train(wordLength=16,threshold=32)
 for y in x.query('358c86641a5269ab5b0db5f1b2315c1642cef9652c39b6ced9f646d91f071927'):
     # hits are returned as a tuple of hash value and hamming distance. 
     print(y)
-    # ('358c86641a5269ab5b0db5f1b2315c1642cef9652c39b6ced9f646d91f071927', 0)          
-    # ('358c86641a5269ab5b0db5f1b2315c1642cef9652c39b6ced9f646d91f071928', 4)
+# ('358c86641a5269ab5b0db5f1b2315c1642cef9652c39b6ced9f646d91f071927', ['ignorable'], 0)
+# ('358c86641a5269ab5b0db5f1b2315c1642cef9652c39b6ced9f646d91f071928', ['ignorable'], 4)
 
 ``` 
 
