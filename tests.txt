@@ -1,0 +1,76 @@
+The pyMIH module
+======================
+
+Using MIHIndex
+----------------------
+
+>>> from pyMIH import MIHIndex
+>>> from bitarray import bitarray
+>>> import unittest
+
+Declare MIHIndex
+    >>> x = MIHIndex()
+
+Declare with invalid hash size/length
+    >>> x = MIHIndex(257)
+    Traceback (most recent call last):
+        ...
+    ValueError: hashsize 257 is not a multiple of 8
+
+Declare with valid hash length
+    >>> x = MIHIndex(256)
+
+Add valid data
+    >>> x.update(['358c86641a5269ab5b0db5f1b2315c1642cef9652c39b6ced9f646d91f071927','358c86641a5269ab5b0db5f1b2315c1642cef9652c39b6ced9f646d91f071928','358c86641a5269ab5b0db5f1b2315c1642cef9652c39b6ced9f646d91f071936'])
+
+Add invalid data - faulty hex string
+    >>> x.update(['358c86641a5269ab5b0db5f1b2315c1642cef9652c39b6ced9f646d91f071927','358c86641a5269ab5b0db5f1b2315c1642cef9652c39b6ced9f646d91f07192g'])
+    Traceback (most recent call last):
+        ...
+    ValueError: Not a valid hex string: 358c86641a5269ab5b0db5f1b2315c1642cef9652c39b6ced9f646d91f07192g
+
+Add invalid data - string (not iterable list/set). Function converts to list
+    >>> x.update('358c86641a5269ab5b0db5f1b2315c1642cef9652c39b6ced9f646d91f071927')
+
+Add invalid data - int.
+    >>> x.update(358)
+    Traceback (most recent call last):
+        ...
+    TypeError: 'int' object is not iterable
+
+Test window generation.
+    >>> b = bitarray()
+    >>> b.frombytes(bytes.fromhex('358c'))
+    >>> len(x._getwindow(b,distance = 1))
+    17
+    >>> len(x._getwindow(b,distance = 2))
+    137
+    >>> '358c' in x._getwindow(b,distance = 2)
+    True
+
+Attempt query without training
+>>> x = MIHIndex()
+    >>> x.update(['358c86641a5269ab5b0db5f1b2315c1642cef9652c39b6ced9f646d91f071927','358c86641a5269ab5b0db5f1b2315c1642cef9652c39b6ced9f646d91f071928','358c86641a5269ab5b0db5f1b2315c1642cef9652c39b6ced9f646d91f071936'])
+    >>> ('358c86641a5269ab5b0db5f1b2315c1642cef9652c39b6ced9f646d91f071927', 0) in x.query('358c86641a5269ab5b0db5f1b2315c1642cef9652c39b6ced9f646d91f071927')
+    Traceback (most recent call last):
+        ...
+    ValueError: Index not trained yet
+
+Test index accuracy
+    >>> x = MIHIndex()
+    >>> x.update(['358c86641a5269ab5b0db5f1b2315c1642cef9652c39b6ced9f646d91f071927','358c86641a5269ab5b0db5f1b2315c1642cef9652c39b6ced9f646d91f071928','358c86641a5269ab5b0db5f1b2315c1642cef9652c39b6ced9f646d91f071936'])
+    >>> x.train(16,32)
+    >>> ('358c86641a5269ab5b0db5f1b2315c1642cef9652c39b6ced9f646d91f071927', 0) in x.query('358c86641a5269ab5b0db5f1b2315c1642cef9652c39b6ced9f646d91f071927')
+    True
+    >>> ('358c86641a5269ab5b0db5f1b2315c1642cef9652c39b6ced9f646d91f071928', 4) in x.query('358c86641a5269ab5b0db5f1b2315c1642cef9652c39b6ced9f646d91f071927')
+    True
+
+Decrease HD
+   >>> x = MIHIndex()
+   >>> x.update(['358c86641a5269ab5b0db5f1b2315c1642cef9652c39b6ced9f646d91f071927','358c86641a5269ab5b0db5f1b2315c1642cef9652c39b6ced9f646d91f071928','358c86641a5269ab5b0db5f1b2315c1642cef9652c39b6ced9f646d91f071936'])
+   >>> x.train(16,0)
+   >>> ('358c86641a5269ab5b0db5f1b2315c1642cef9652c39b6ced9f646d91f071927', 0) in x.query('358c86641a5269ab5b0db5f1b2315c1642cef9652c39b6ced9f646d91f071927')
+   True
+   >>> ('358c86641a5269ab5b0db5f1b2315c1642cef9652c39b6ced9f646d91f071928', 4) in x.query('358c86641a5269ab5b0db5f1b2315c1642cef9652c39b6ced9f646d91f071927')
+   False
+
