@@ -10,6 +10,12 @@ The threatexchange document (linked above) provides a good, 'plain English' desc
 
 ***
 
+### Installation
+PyMIH is available via pypi:
+```console
+pip install pyMIH
+```
+***
 ### Usage
 Default values for MIHIndex constructor and train() method are set for PDQ hash, using 32 bit match threshold (30 being non divisible by 8).
 ```python
