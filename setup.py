@@ -2,7 +2,7 @@ from setuptools import setup
 
 setup(
     name='pyMIH',
-    version='0.7.0',
+    version='0.7.1',
     packages=[''],
     url='https://github.com/AiLECS/pyMIH',
     license='MIT',
