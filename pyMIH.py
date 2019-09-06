@@ -26,27 +26,16 @@ class MIHIndex:
         self._threshold = None
         self._cache = None
 
-    #candidate for cache tools here!
     def _getwindow(self, word, distance=2, _position=0, _entries=set()):
         """
         Calculate and return a set of all hex combinations within the provided hamming distance
 
-        >>> x = MIHIndex()
-        >>> b = bitarray()
-        >>> b.frombytes(bytes.fromhex('358c'))
-        >>> len(x._getwindow(b,distance = 1))
-        17
-
-        >>> len(_getwindow(b,distance = 2))
-        137
-
-        :param word: candidate word as bitarray
+        :param word: candidate word as bitarray. If string provided, converts to bitarray internally.
         :param distance: Maximum hamming distance (inclusive). Defaults to 2
         :param _position: Position to commence comparison. For internal (recursive) use only.
         :param _entries: Set of possible entries. For internal (recursive) use only.
         :return: set of hex strings within provided hamming distance of candidate word.
         """
-
         if _position == len(word):
             _entries.add(word.tobytes().hex())
             return _entries
@@ -139,7 +128,7 @@ class MIHIndex:
 
     # Check hamming distance - iterate through list. Returns None if distance exceeded
     @staticmethod
-    def _gethamming(hash1, hash2, maxhd=None):
+    def gethamming(hash1, hash2, maxhd=None):
         """
         Calculate hamming distance between hashes
         :param hash1: Candidate hash
@@ -167,20 +156,23 @@ class MIHIndex:
             raise ValueError('Index not trained yet')
         b = bitarray()
         b.frombytes(bytes.fromhex(h))
+        if len(b) != self._hashlength:
+            raise ValueError('Invalid hash length encountered: ' + h)
+
         candidates = set()
-        c = 0
+        slot = 0
         for i in range(0, self._hashlength, self._wordlength):
             window = self._getwindow(b[i:i+self._wordlength])
             for w in window:
-                if w in self._words[c]:
-                    for x in self._words[c][w]:
+                if w in self._words[slot]:
+                    for x in self._words[slot][w]:
                         if x not in candidates:
-                            r = self._gethamming(b, self._index[x][0], self._threshold)
+                            r = self.gethamming(b, self._index[x][0], self._threshold)
                             if r is not None:
                                 cats = []
                                 for d in self._index[x][1]:
                                     cats.append(self._categories[d])
                                 yield self._index[x][0].tobytes().hex(), cats, r
                             candidates.add(x)
-            c += 1
+            slot += 1
 
